@@ -134,11 +134,14 @@ make OS=linux ARCH=x86_64
         display: grid;
         gap: 1rem;
         margin-top: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        justify-content: center;
+        align-items: start;
       }
 
       @media (min-width: 860px) {
         .grid {
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(2, minmax(320px, 1fr));
         }
       }
 
@@ -147,6 +150,9 @@ make OS=linux ARCH=x86_64
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 1rem;
+        width: 100%;
+        max-width: 480px;
+        margin-inline: auto;
       }
 
       h2 {
@@ -182,16 +188,29 @@ make OS=linux ARCH=x86_64
 
       .fork {
         position: fixed;
-        top: 18px;
-        right: -56px;
+        top: 22px;
+        right: -46px;
+        width: 240px;
+        text-align: center;
         transform: rotate(45deg);
         background: var(--accent-2);
         color: #fff;
         text-decoration: none;
         font-weight: 700;
-        padding: 0.45rem 4rem;
+        padding: 0.45rem 1rem;
         box-shadow: 0 8px 18px rgba(10, 80, 96, 0.25);
         z-index: 10;
+      }
+
+      @media (max-width: 700px) {
+        .fork {
+          top: 10px;
+          right: 10px;
+          width: auto;
+          padding: 0.5rem 0.8rem;
+          border-radius: 999px;
+          transform: none;
+        }
       }
     </style>
   </head>
