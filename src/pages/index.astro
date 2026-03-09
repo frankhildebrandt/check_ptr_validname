@@ -1,8 +1,12 @@
 ---
-const repository = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/OWNER/REPO';
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Section from '../components/Section.astro';
+
+const repository = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/frankhildebrandt/check_ptr_validname';
 const codeZip = import.meta.env.PUBLIC_CODE_ZIP_URL ?? `${repository}/archive/refs/heads/main.zip`;
-const linuxBinary =
-  import.meta.env.PUBLIC_BIN_URL ?? `${repository}/releases/latest/download/check_ptr_validname-linux-x86_64`;
+const linuxBinary = import.meta.env.PUBLIC_BIN_URL ?? `${repository}/releases/latest/download/check_ptr_validname-linux-x86_64`;
+
 const icingaCheckCommand = `object CheckCommand "check_ptr_validname" {
   import "plugin-check-command"
 
@@ -26,250 +30,53 @@ const icingaCheckCommand = `object CheckCommand "check_ptr_validname" {
   vars.check_ptr_timeout_ms = 2000
   vars.check_ptr_perfdata = true
 }`;
-const icingaApplyRule = `apply Service "ptr-validname-" for (ip => cfg in host.vars.ptr_checks) {
-  import "generic-service"
 
-  check_command = "check_ptr_validname"
-  vars.check_ptr_ip = ip
-  vars += cfg
-
-  assign where host.vars.ptr_checks
-}`;
-const cliTest = `# build locally
-make OS=linux ARCH=x86_64
-
-# run check
-./build/linux-x86_64/check_ptr_validname -i 8.8.8.8 --perfdata
-
-# optional: fixed resolver
-./build/linux-x86_64/check_ptr_validname -i 1.1.1.1 -r 8.8.8.8 --warn-partial`;
+const quickTest = `make OS=linux ARCH=x86_64
+./build/linux-x86_64/check_ptr_validname -i 8.8.8.8 --perfdata`;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>check_ptr_validname | DNS PTR Check</title>
-    <style>
-      :root {
-        --bg: #f5f7fa;
-        --panel: #ffffff;
-        --text: #182230;
-        --muted: #5f6c80;
-        --accent: #0a7ea4;
-        --accent-2: #0db39e;
-        --border: #dbe3ee;
-        --ok: #13795b;
-      }
+<Layout title="check_ptr_validname | DNS PTR validation check">
+  <Header gridBg>
+    <small class="small">Monitoring-ready DNS validation</small>
+    <h2 class="text-12 leading-12 lg:text-20 lg:leading-20"><span class="font-mono">check_ptr_validname</span></h2>
+    <p class="subtitle w-95% lg:w-60% mx-auto mt-5">
+      A compact C-based check that validates reverse DNS PTR records, hostname quality, and forward-confirm match for IPv4/IPv6.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3 justify-center">
+      <a class="bg-gray-800 c-white py-3 px-5 text-sm" href={linuxBinary}>Download Linux x86_64 Binary</a>
+      <a class="bg-gray-100 c-gray-900 py-3 px-5 text-sm" href={codeZip}>Download Source ZIP</a>
+      <a class="bg-gray-100 c-gray-900 py-3 px-5 text-sm" href={repository}>Fork me on GitHub</a>
+    </div>
+  </Header>
 
-      * {
-        box-sizing: border-box;
-      }
+  <main>
+    <Section index source="overview.md" fullWidthBorder>
+      <h2 class="title">What It Checks</h2>
+      <ul class="subtitle-small mt-4">
+        <li>IP parsing and address-family validation (IPv4/IPv6)</li>
+        <li>PTR lookup against system resolver or explicit resolver</li>
+        <li>Strict hostname validation with optional IDN/punycode checks</li>
+        <li>Forward lookup and exact IP forward-confirm match</li>
+        <li>Nagios/Icinga exit codes and optional perfdata/JSON output</li>
+      </ul>
+    </Section>
 
-      body {
-        margin: 0;
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 20% 10%, #d7eff8 0%, transparent 45%),
-          radial-gradient(circle at 90% 0%, #d8f5ef 0%, transparent 40%),
-          var(--bg);
-        line-height: 1.45;
-      }
+    <Section index source="quickstart.sh" fullWidthBorder>
+      <h2 class="title">Quick Start</h2>
+      <p class="subtitle-small">Build and run the check directly from the command line:</p>
+      <pre><code>{quickTest}</code></pre>
+    </Section>
 
-      .wrap {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 2rem 1rem 3rem;
-      }
-
-      .hero {
-        background: linear-gradient(125deg, #ffffff, #f3fbff);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 2rem;
-        box-shadow: 0 14px 30px rgba(16, 36, 68, 0.08);
-      }
-
-      h1 {
-        margin: 0 0 0.5rem;
-        font-size: clamp(1.6rem, 3.8vw, 2.5rem);
-      }
-
-      .lead {
-        margin: 0;
-        color: var(--muted);
-        max-width: 70ch;
-      }
-
-      .buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1.25rem;
-      }
-
-      .btn {
-        display: inline-block;
-        text-decoration: none;
-        font-weight: 600;
-        border-radius: 10px;
-        padding: 0.7rem 1rem;
-        border: 1px solid transparent;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: #fff;
-      }
-
-      .btn-secondary {
-        background: #fff;
-        color: var(--text);
-        border-color: var(--border);
-      }
-
-      .top-links {
-        margin-top: 0.75rem;
-      }
-
-      .top-links a {
-        color: var(--accent);
-        text-decoration: none;
-        font-weight: 600;
-      }
-
-      .grid {
-        display: grid;
-        gap: 1rem;
-        margin-top: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        justify-content: center;
-        align-items: start;
-      }
-
-      @media (min-width: 860px) {
-        .grid {
-          grid-template-columns: repeat(2, minmax(320px, 1fr));
-        }
-      }
-
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 1rem;
-        width: 100%;
-        max-width: 480px;
-        margin-inline: auto;
-      }
-
-      h2 {
-        margin-top: 0.2rem;
-        margin-bottom: 0.5rem;
-        font-size: 1.1rem;
-      }
-
-      p,
-      li {
-        color: var(--muted);
-      }
-
-      code,
-      pre {
-        font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
-      }
-
-      pre {
-        margin: 0.6rem 0 0;
-        border-radius: 10px;
-        background: #0f1722;
-        color: #e8f1ff;
-        padding: 0.85rem;
-        overflow: auto;
-        font-size: 0.85rem;
-      }
-
-      .status {
-        color: var(--ok);
-        font-weight: 600;
-      }
-
-      .fork {
-        position: fixed;
-        top: 22px;
-        right: -46px;
-        width: 240px;
-        text-align: center;
-        transform: rotate(45deg);
-        background: var(--accent-2);
-        color: #fff;
-        text-decoration: none;
-        font-weight: 700;
-        padding: 0.45rem 1rem;
-        box-shadow: 0 8px 18px rgba(10, 80, 96, 0.25);
-        z-index: 10;
-      }
-
-      @media (max-width: 700px) {
-        .fork {
-          top: 10px;
-          right: 10px;
-          width: auto;
-          padding: 0.5rem 0.8rem;
-          border-radius: 999px;
-          transform: none;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <a class="fork" href={repository} target="_blank" rel="noreferrer">Fork me on GitHub</a>
-
-    <main class="wrap">
-      <section class="hero">
-        <h1>check_ptr_validname</h1>
-        <p class="lead">
-          Compact DNS monitoring check: resolve PTR, validate hostname, and verify forward-confirm match. Output and exit codes are Nagios/Icinga compatible.
-        </p>
-
-        <div class="buttons">
-          <a class="btn btn-primary" href={linuxBinary}>Download Linux binary</a>
-          <a class="btn btn-secondary" href={codeZip}>Download source ZIP</a>
-          <a class="btn btn-secondary" href={repository}>Repository</a>
-        </div>
-        <p class="top-links"><a href="/de/">Deutsch</a></p>
-      </section>
-
-      <section class="grid">
-        <article class="card">
-          <h2>ICINGA CheckCommand</h2>
-          <p>Example for <code>/etc/icinga2/conf.d/commands.conf</code>:</p>
-          <pre><code>{icingaCheckCommand}</code></pre>
-        </article>
-
-        <article class="card">
-          <h2>Service Apply Rule</h2>
-          <p>Example for multiple IP checks per host via <code>host.vars.ptr_checks</code>:</p>
-          <pre><code>{icingaApplyRule}</code></pre>
-        </article>
-
-        <article class="card">
-          <h2>Command Line Test</h2>
-          <p>Quick manual shell test:</p>
-          <pre><code>{cliTest}</code></pre>
-        </article>
-
-        <article class="card">
-          <h2>Build and Release</h2>
-          <p>
-            <span class="status">Enabled via GitHub Actions</span><br />
-            1) <strong>Deploy GitHub Pages</strong>: builds this page on push to <code>main</code>.<br />
-            2) <strong>Build Linux x86_64 Binary</strong>: always creates artifacts and publishes release assets for tags such as <code>v1.0.0</code>.
-          </p>
-        </article>
-      </section>
-    </main>
-  </body>
-</html>
+    <Section index source="icinga2.conf" fullWidthBorder>
+      <h2 class="title">Icinga2 Integration (Snippet)</h2>
+      <p class="subtitle-small">Drop this check command into your Icinga2 command definitions:</p>
+      <pre><code>{icingaCheckCommand}</code></pre>
+      <p class="subtitle-small mt-6">Full integration examples for Icinga2, Nagios, and CLI usage are available in the docs section.</p>
+      <div class="mt-6 flex gap-3 flex-wrap">
+        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/code">Code Documentation</a>
+        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/cli-options">CLI Options</a>
+        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/integrations">Integrations</a>
+      </div>
+    </Section>
+  </main>
+</Layout>

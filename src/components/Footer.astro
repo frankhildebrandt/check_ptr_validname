@@ -1,0 +1,12 @@
+---
+import { SITE_NAME } from '../consts';
+
+const now = new Date();
+const year = new Intl.DateTimeFormat('en-US', { year: 'numeric' }).format(now);
+---
+
+<footer class="py-6.25 border-t-1 border-gray-200 c-gray-600 grid place-content-center gap-[1ch] grid-cols-[repeat(3,auto)]">
+  <span>&copy; {year} {SITE_NAME}</span>
+  <span>&mdash;</span>
+  <span>Built for monitoring workflows</span>
+</footer>

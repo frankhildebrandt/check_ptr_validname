@@ -1,0 +1,106 @@
+---
+import Footer from '../components/Footer.astro';
+import { SITE_DESCRIPTION, SITE_NAME } from '../consts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE_NAME, description = SITE_DESCRIPTION } = Astro.props;
+const navLinks = {
+  '/': 'Home',
+  '/docs/code': 'Code',
+  '/docs/cli-options': 'CLI Options',
+  '/docs/integrations': 'Integrations'
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <nav class="border-b-1 border-b-gray-200">
+      <div class="flex items-center justify-between border-x-1 border-gray-200 pl-5 wrapper mx-auto">
+        <h1 class="font-mono text-xl">check_ptr_validname</h1>
+        <ul class="grid grid-auto-flow-col">
+          {Object.entries(navLinks).map(([href, linkTitle]) => (
+            <li>
+              <a href={href} class="text-sm px-5 py-8 tracking-0.1 block">{linkTitle}</a>
+            </li>
+          ))}
+          <li>
+            <a href="https://github.com/frankhildebrandt/check_ptr_validname" class="text-sm px-5 py-8 tracking-0.1 block">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <slot />
+    <Footer />
+  </body>
+</html>
+
+<style is:global>
+  html,
+  body {
+    height: 100%;
+    min-height: 100vh;
+  }
+
+  body {
+    display: flex;
+    flex-flow: column;
+  }
+
+  body > main {
+    flex: 1;
+  }
+
+  .content-wrapper {
+    :is(h2, h3, h4, h5, h6) {
+      font-weight: 600;
+      margin-top: 1ex;
+    }
+
+    p {
+      margin-top: 1ex;
+    }
+
+    h2 {
+      font-size: 1.875rem;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+    }
+
+    h4 {
+      font-size: 1.35rem;
+    }
+
+    h5,
+    h6 {
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    ul {
+      list-style-type: square;
+      list-style-position: inside;
+      margin-top: 1ex;
+    }
+
+    pre {
+      margin-top: 1ex;
+      padding-block: 1.5rem;
+      overflow: auto;
+      border-radius: 6px;
+    }
+  }
+</style>

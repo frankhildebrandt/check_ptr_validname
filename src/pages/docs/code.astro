@@ -1,0 +1,45 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Section from '../../components/Section.astro';
+---
+
+<Layout title="Code Documentation | check_ptr_validname">
+  <main>
+    <Section fullWidthBorder index source="check_ptr_validname.c">
+      <div class="content-wrapper">
+        <h2>Code Documentation</h2>
+        <p>
+          <code>check_ptr_validname.c</code> is a single-binary C implementation focused on predictable monitoring behavior and minimal runtime dependencies.
+        </p>
+
+        <h3>Main Flow</h3>
+        <ul>
+          <li>Parse CLI options into a runtime options struct.</li>
+          <li>Validate IP and choose resolver.</li>
+          <li>Execute PTR lookup and measure lookup latency.</li>
+          <li>Validate returned hostname with strict rules and optional IDN checks.</li>
+          <li>Perform forward lookup and verify forward-confirm match.</li>
+          <li>Map result to Nagios/Icinga state and emit text or JSON output.</li>
+        </ul>
+
+        <h3>Key Data Structures</h3>
+        <ul>
+          <li><code>struct options</code>: parsed runtime flags and timeout/resolver behavior.</li>
+          <li><code>struct check_result</code>: state, details, latency, and per-check booleans.</li>
+        </ul>
+
+        <h3>Output Modes</h3>
+        <ul>
+          <li>Human-readable monitoring line with optional perfdata.</li>
+          <li>Machine-readable JSON mode via <code>--json</code>.</li>
+        </ul>
+
+        <h3>Build Layout</h3>
+        <pre><code>make
+make OS=linux ARCH=x86_64
+make OS=windows ARCH=x86_64 CROSS=x86_64-w64-mingw32-
+</code></pre>
+      </div>
+    </Section>
+  </main>
+</Layout>
