@@ -126,3 +126,33 @@ Beispiel:
 - `--strict-cname-chain`: CNAME-Ketten explizit verfolgen und im Ergebnis dokumentieren.
 - Batch-Modus (mehrere IPs aus Datei/stdin) fuer schnelle Massenpruefung.
 - Optionales Structured Logging (`ndjson`) fuer Observability-Pipelines.
+
+## GitHub Actions
+
+Dieses Repo enthaelt zwei Workflows:
+
+- `Deploy GitHub Pages` (`.github/workflows/pages.yml`)
+  - Trigger: Push auf `main` oder manuell
+  - Baut die Website mit Astro (`src/pages/index.astro`)
+  - Verwendet `PUBLIC_*` Umgebungsvariablen fuer Repo-/Download-Links
+  - Deployt die 1-Pager-Doku nach GitHub Pages
+
+- `Build Linux x86_64 Binary` (`.github/workflows/release-linux.yml`)
+  - Trigger: Tags `v*` oder manuell
+  - Baut `check_ptr_validname` fuer `linux/x86_64`
+  - Laedt Binary + SHA256 als Workflow-Artefakt hoch
+  - Erstellt bei Tag-Build automatisch ein GitHub Release mit Assets
+
+Tag-Beispiel fuer ein Release:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+## Website lokal testen (Astro)
+
+```sh
+npm ci
+npm run dev
+```

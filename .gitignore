@@ -1,2 +1,5 @@
 build/
 check_ptr_validname
+node_modules/
+dist/
+.astro/

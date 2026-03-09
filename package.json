@@ -1,0 +1,24 @@
+{
+  "name": "checkvaliddns",
+  "version": "1.0.0",
+  "description": "`check_ptr_validname` ist ein DNS-Check in C, der fuer eine IP-Adresse prueft, ob PTR-Eintrag und Forward-Aufloesung konsistent sind.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frankhildebrandt/check_ptr_validname.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/frankhildebrandt/check_ptr_validname/issues"
+  },
+  "homepage": "https://github.com/frankhildebrandt/check_ptr_validname#readme",
+  "devDependencies": {
+    "astro": "^5.18.0"
+  }
+}
