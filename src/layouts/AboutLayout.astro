@@ -1,0 +1,17 @@
+---
+import Header from "../components/Header.astro";
+import Section from "../components/Section.astro";
+import Layout from "./Layout.astro";
+---
+
+<Layout title={Astro.props.title ?? "Documentation"}>
+  <Header>
+    <h1 class="title">{Astro.props.heading ?? Astro.props.title ?? "Documentation"}</h1>
+    {Astro.props.subtitle && <p class="subtitle mt-4">{Astro.props.subtitle}</p>}
+  </Header>
+  <main class="content-wrapper">
+    <Section>
+      <slot />
+    </Section>
+  </main>
+</Layout>

@@ -1,0 +1,40 @@
+---
+import Card from "../../components/Card.astro";
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import Section from "../../components/Section.astro";
+import SectionSpacer from "../../components/SectionSpacer.astro";
+
+const docs = [
+  {
+    href: "/docs/code",
+    title: "Code Documentation",
+    body: "Implementation flow, structs, resolver handling, and output behavior.",
+  },
+  {
+    href: "/docs/cli-options",
+    title: "CLI Options",
+    body: "Reference for flags, modes, examples, and exit-state expectations.",
+  },
+  {
+    href: "/docs/integrations",
+    title: "Integrations",
+    body: "Icinga2, Nagios, and general shell usage with copy-paste examples.",
+  },
+];
+---
+
+<Layout title="Documentation | check_ptr_validname">
+  <Header gridBg>
+    <h1 class="text-12 leading-[1.2] lg:text-20">Documentation</h1>
+    <h2 class="text-8 leading-[1.2] lg:text-16 c-gray-600">Operator-facing reference for the binary, the source code, and monitoring integrations.</h2>
+  </Header>
+  <main>
+    <Section fullWidthBorder>
+      <ul class="grid md:grid-cols-3 gap-5 ignore-content-container">
+        {docs.map((doc) => <Card {...doc} />)}
+      </ul>
+    </Section>
+    <SectionSpacer size="lg" />
+  </main>
+</Layout>

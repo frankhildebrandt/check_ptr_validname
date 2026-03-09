@@ -1,0 +1,20 @@
+[
+  {
+    "value": 4,
+    "unit": "",
+    "title": "Nagios states",
+    "by": 1
+  },
+  {
+    "value": 3,
+    "unit": "",
+    "title": "Output modes",
+    "by": 1
+  },
+  {
+    "value": 6,
+    "unit": "",
+    "title": "Primary CLI flags",
+    "by": 1
+  }
+]

@@ -1,35 +1,16 @@
 ---
+import { getCollection } from "astro:content";
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Section from '../components/Section.astro';
+import ProjectCard from "../components/ProjectCard.astro";
+import SectionSpacer from "../components/SectionSpacer.astro";
+import StatsGrid from "../components/StatsGrid.astro";
 
 const repository = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/frankhildebrandt/check_ptr_validname';
 const codeZip = import.meta.env.PUBLIC_CODE_ZIP_URL ?? `${repository}/archive/refs/heads/main.zip`;
 const linuxBinary = import.meta.env.PUBLIC_BIN_URL ?? `${repository}/releases/latest/download/check_ptr_validname-linux-x86_64`;
-
-const icingaCheckCommand = `object CheckCommand "check_ptr_validname" {
-  import "plugin-check-command"
-
-  command = [ PluginDir + "/check_ptr_validname" ]
-
-  arguments += {
-    "-i" = "$check_ptr_ip$"
-    "-r" = "$check_ptr_resolver$"
-    "--timeout-ms" = "$check_ptr_timeout_ms$"
-    "--warn-partial" = {
-      set_if = "$check_ptr_warn_partial$"
-    }
-    "--perfdata" = {
-      set_if = "$check_ptr_perfdata$"
-    }
-    "--idn-check" = {
-      set_if = "$check_ptr_idn_check$"
-    }
-  }
-
-  vars.check_ptr_timeout_ms = 2000
-  vars.check_ptr_perfdata = true
-}`;
+const projects = await getCollection("projects");
 
 const quickTest = `make OS=linux ARCH=x86_64
 ./build/linux-x86_64/check_ptr_validname -i 8.8.8.8 --perfdata`;
@@ -38,7 +19,7 @@ const quickTest = `make OS=linux ARCH=x86_64
 <Layout title="check_ptr_validname | DNS PTR validation check">
   <Header gridBg>
     <small class="small">Monitoring-ready DNS validation</small>
-    <h2 class="text-12 leading-12 lg:text-20 lg:leading-20"><span class="font-mono">check_ptr_validname</span></h2>
+    <h2 class="text-12 leading-12 lg:text-20 lg:leading-20"><span class="font-mono">check_ptr_validname</span> keeps reverse DNS honest</h2>
     <p class="subtitle w-95% lg:w-60% mx-auto mt-5">
       A compact C-based check that validates reverse DNS PTR records, hostname quality, and forward-confirm match for IPv4/IPv6.
     </p>
@@ -50,32 +31,54 @@ const quickTest = `make OS=linux ARCH=x86_64
   </Header>
 
   <main>
-    <Section index source="overview.md" fullWidthBorder>
-      <h2 class="title">What It Checks</h2>
-      <ul class="subtitle-small mt-4">
-        <li>IP parsing and address-family validation (IPv4/IPv6)</li>
-        <li>PTR lookup against system resolver or explicit resolver</li>
-        <li>Strict hostname validation with optional IDN/punycode checks</li>
-        <li>Forward lookup and exact IP forward-confirm match</li>
-        <li>Nagios/Icinga exit codes and optional perfdata/JSON output</li>
+    <Section index source="projects.json" fullWidthBorder>
+      <h2 class="title">Project Surfaces</h2>
+      <p class="subtitle-small">The Naid project grid fits this repository well: binary distribution, source availability, and operator-facing documentation are the three things users actually need.</p>
+      <ul class="my-5 project-list ignore-content-container border-y-1 border-y-gray-200 border-y-dotted">
+        {projects.map((project) => <ProjectCard {...project.data} />)}
       </ul>
+      <div class="grid md:grid-cols-[1fr_250px] py-12.5">
+        <div class="grid-col-1 pr-12.5">
+          <h3 class="mb-3 project-title">Mission</h3>
+          <p class="subtitle-small">Detect DNS hygiene problems before they surface as flaky monitoring, invalid reverse DNS, or non-compliant naming. The check stays small, portable, and predictable.</p>
+        </div>
+        <div class="font-mono">
+          <small>$ quick test</small><br /><br />
+          <small>{quickTest}</small>
+        </div>
+      </div>
     </Section>
 
-    <Section index source="quickstart.sh" fullWidthBorder>
-      <h2 class="title">Quick Start</h2>
-      <p class="subtitle-small">Build and run the check directly from the command line:</p>
-      <pre><code>{quickTest}</code></pre>
+    <SectionSpacer size="md" />
+
+    <Section fullWidthBorder={false}>
+      <h2 class="text-xl my-10">One binary, clear states, and monitoring-friendly output. Built for operators who need useful failures rather than vague DNS errors.</h2>
     </Section>
 
-    <Section index source="icinga2.conf" fullWidthBorder>
-      <h2 class="title">Icinga2 Integration (Snippet)</h2>
-      <p class="subtitle-small">Drop this check command into your Icinga2 command definitions:</p>
-      <pre><code>{icingaCheckCommand}</code></pre>
-      <p class="subtitle-small mt-6">Full integration examples for Icinga2, Nagios, and CLI usage are available in the docs section.</p>
-      <div class="mt-6 flex gap-3 flex-wrap">
-        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/code">Code Documentation</a>
-        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/cli-options">CLI Options</a>
-        <a class="bg-gray-800 c-white py-3 px-5 text-sm" href="/docs/integrations">Integrations</a>
+    <StatsGrid entryName="downloads" />
+
+    <SectionSpacer size="md" />
+
+    <Section index source="docs/" fullWidthBorder variant="dark">
+      <div class="lg:w-[60%] md:w-[70%] mx-auto">
+        <h2 class="title">Documentation</h2>
+        <p class="subtitle-small">The project docs are written as Markdown pages on top of the template layout. That keeps the site close to how Naid is meant to be extended: content pages, not hand-built one-off sections.</p>
+        <ul class="flex flex-col gap-row-3 mt-3 subtitle-small">
+          <li><strong class="text-[1.2em]">Code:</strong> runtime flow, data structures, and build behavior.</li>
+          <li><strong class="text-[1.2em]">CLI Options:</strong> every flag, expected behavior, and concrete examples.</li>
+          <li><strong class="text-[1.2em]">Integrations:</strong> Icinga2, Nagios, and general shell/script usage.</li>
+        </ul>
+      </div>
+    </Section>
+
+    <SectionSpacer size="md" />
+
+    <Section index source="docs/index.md" fullWidthBorder variantInside="dark">
+      <div class="grid lg:grid-cols-[4fr_1fr] place-items-center gap-5">
+        <h2 class="text-pretty title text-8 leading-8 font-bold c-gray-800 dark:c-gray-100">Need the actual setup details?<br /><span class="c-gray-500 dark:c-gray-300 text-[0.9em]">Open the documentation hub and jump straight to code, CLI, or monitoring integration.</span></h2>
+        <div>
+          <a href="/docs" class="block fw-bold bg-gray-800 c-gray-100 text-5 text-center py-4 px-7">Open Docs</a>
+        </div>
       </div>
     </Section>
   </main>
