@@ -1,13 +1,13 @@
 # check_ptr_validname
 
-`check_ptr_validname` ist ein kleiner DNS-Check in C, der fuer eine IP-Adresse prueft, ob der PTR-Eintrag technisch und inhaltlich konsistent ist.
+`check_ptr_validname` ist ein DNS-Check in C, der fuer eine IP-Adresse prueft, ob PTR-Eintrag und Forward-Aufloesung konsistent sind.
 
 ## Kompilieren
 
 Voraussetzungen:
 - C-Compiler (`cc`, `gcc` oder `clang`)
 - `make`
-- POSIX-Umgebung (Linux/macOS; Cross-Compile fuer Windows ist ueber Toolchain moeglich)
+- POSIX-Umgebung (Linux/macOS; Cross-Compile fuer Windows ueber Toolchain)
 
 Build fuer das Host-System:
 
@@ -21,11 +21,7 @@ Build-Konfiguration anzeigen:
 make print-config
 ```
 
-Artefakt wird unter `build/<os>-<arch>/check_ptr_validname` erzeugt, z. B.:
-
-```text
-build/macos-arm64/check_ptr_validname
-```
+Artefakt wird unter `build/<os>-<arch>/check_ptr_validname` erzeugt.
 
 Cross-Compile-Beispiele:
 
@@ -45,75 +41,88 @@ make clean
 Grundsyntax:
 
 ```sh
-./build/<os>-<arch>/check_ptr_validname -i <ip-address>
+./build/<os>-<arch>/check_ptr_validname -i <ip-address> [options]
 ```
 
 Beispiel:
 
 ```sh
-./build/macos-arm64/check_ptr_validname -i 8.8.8.8
+./build/macos-arm64/check_ptr_validname -i 8.8.8.8 --perfdata
 ```
 
 Unterstuetzte Parameter:
-- `-i`, `--ip` IP-Adresse (IPv4 oder IPv6)
-- `-h`, `--help` Hilfe ausgeben
+- `-i`, `--ip <ip>`: IP-Adresse (IPv4 oder IPv6), Pflicht
+- `-r`, `--resolver <ip>`: Expliziter DNS-Resolver (statt automatisch aus `/etc/resolv.conf`)
+- `-t`, `--timeout-ms <ms>`: Timeout pro DNS-Lookup in Millisekunden (Default: `2000`)
+- `--warn-partial`: Teilkonsistenz als `WARNING` statt `CRITICAL` behandeln
+- `--perfdata`: Monitoring-Perfdata anhaengen
+- `--json`: JSON-Ausgabe fuer Automatisierung/Pipelines
+- `--idn-check`: Erweiterte IDN/Punycode-Validierung aktivieren
+- `-h`, `--help`: Hilfe anzeigen
 
-Exit-Codes (Nagios/Icinga-kompatibel):
+## Exit-Codes (Nagios/Icinga-kompatibel)
+
 - `0` = `OK`
-- `1` = `WARNING` (aktuell nicht verwendet)
+- `1` = `WARNING`
 - `2` = `CRITICAL`
 - `3` = `UNKNOWN`
 
-## Checkmoeglichkeiten
+## Was wird geprueft
 
-Der Check fuehrt folgende Pruefungen aus:
+1. Eingabevalidierung der IP (IPv4/IPv6).
+2. PTR-Lookup per DNS-Query.
+3. Hostname-Validierung:
+   - Strikt: RFC-nahe FQDN-Regeln (`[A-Za-z0-9-]`, Label 1-63, Gesamtlaenge <= 253)
+   - Optional: IDN/Punycode-Check (`--idn-check`) fuer `xn--` Labels
+4. Forward-Lookup (`A` bei IPv4, `AAAA` bei IPv6).
+5. Forward-Confirm-Match: mindestens eine Forward-IP muss exakt zur Eingabe-IP passen.
 
-1. Eingabevalidierung der IP (IPv4 oder IPv6).
-2. Reverse-DNS-Lookup (`PTR`) fuer die IP.
-3. Validierung des PTR-Hostnamens als RFC-naher FQDN:
-   - Gesamte Laenge max. 253
-   - Label-Laenge 1-63
-   - nur `[A-Za-z0-9-]`
-   - Label darf nicht mit `-` beginnen oder enden
-4. Forward-DNS-Lookup (`A`/`AAAA`) des PTR-Hostnamens.
-5. Forward-Confirm-Match: mindestens ein Forward-Ergebnis muss exakt zur geprueften IP passen.
+## Teilkonsistenz / WARNING
 
-Typische Ergebnisse:
-- `OK`: PTR vorhanden, Hostname gueltig, Forward-Confirm passt.
-- `CRITICAL`: kein PTR, ungueltiger Hostname, Forward-Lookup fehlschlaegt oder kein Rueck-Match auf die Ursprungs-IP.
-- `UNKNOWN`: ungueltige Parameter oder ungueltige IP-Eingabe.
+Mit `--warn-partial` werden grenzwertige, aber technisch teilweise aufloesbare Faelle als `WARNING` zurueckgegeben, z. B.:
+- PTR vorhanden, Hostname verletzt strikte Regeln, besteht aber die relaxte Pruefung.
+- IDN/Punycode-Check ist aktiv und meldet Auffaelligkeiten.
 
-## Contributen
+Wenn Forward-Lookup oder Forward-Confirm-Match fehlschlaegt, bleibt das Ergebnis `CRITICAL`.
 
-Empfohlener Workflow:
+## Performance-Data
 
-1. Fork/Branch erstellen.
-2. Aenderung in `check_ptr_validname.c` oder `Makefile` umsetzen.
-3. Neu bauen:
+Mit `--perfdata` wird die erste Ausgabezeile um Latenzen erweitert:
 
-```sh
-make clean && make
+- `ptr_lookup_ms`
+- `forward_lookup_ms`
+- `total_ms`
+
+Beispiel:
+
+```text
+OK - PTR vorhanden und konsistent (8.8.8.8 -> dns.google) [Forward-Confirm-Match erfolgreich] | ptr_lookup_ms=4.768ms;;;; forward_lookup_ms=10.437ms;;;; total_ms=15.842ms;;;;
 ```
 
-4. Manuell testen, z. B. mit bekannten IPs (mit und ohne PTR).
-5. PR mit kurzer Beschreibung erstellen:
-   - Was wurde geaendert?
-   - Warum ist die Aenderung noetig?
-   - Welche Testfaelle wurden lokal ausgefuehrt?
+## JSON-Ausgabe
 
-Code-Richtlinien:
-- Klare und kurze Fehlermeldungen.
-- Exit-Codes stabil halten (Monitoring-Kompatibilitaet).
-- Neue Pruefungen so bauen, dass bestehendes Verhalten nicht regressiert.
+Mit `--json` wird eine maschinenlesbare Ausgabe geliefert, inklusive:
+- `state`, `code`, `message`, `detail`
+- `ip`, `hostname`, `resolver`, `timeout_ms`
+- `checks` (Einzelergebnisse)
+- `latency_ms` (Lookup-Zeiten)
 
-## Potentielle Erweiterungen
+Beispiel:
 
-Moegliche Verbesserungen, um den Check nuetzlicher zu machen:
+```json
+{"state":"OK","code":0,"message":"PTR vorhanden und konsistent","detail":"Forward-Confirm-Match erfolgreich","ip":"8.8.8.8","hostname":"dns.google","resolver":"192.168.171.133:53","timeout_ms":2000,"checks":{"ptr":true,"hostname":true,"idn":true,"forward":true,"forward_match":true,"partial":false},"latency_ms":{"ptr_lookup":7.182,"forward_lookup":46.210,"total":53.425}}
+```
 
-- Optionaler Timeout-Parameter fuer DNS-Lookups.
-- Option fuer expliziten Resolver (statt System-Resolver).
-- Optionales `WARNING`, wenn nur Teilkonsistenz besteht (z. B. PTR vorhanden, aber Hostname grenzwertig).
-- Performance-Data-Ausgabe fuer Monitoring (z. B. Lookup-Latenzen).
-- JSON-Ausgabe fuer Automatisierung/Pipelines.
-- IDN/Punycode-Validierung als optionale, erweiterte Hostname-Pruefung.
-- Unit-Tests fuer Parser/Hostname-Validierung und Integrationstests mit Test-DNS-Zone.
+## Hinweise zur Resolver-Wahl
+
+- Ohne `--resolver` wird der erste `nameserver` aus `/etc/resolv.conf` verwendet.
+- Mit `--resolver` wird explizit gegen diesen Resolver auf Port `53/UDP` gefragt.
+
+## Weitere Ideen
+
+- Option `--resolver-port`, um non-standard DNS-Ports (z. B. Lab-Setups) direkt zu unterstuetzen.
+- TCP-Fallback bei `TC`-Flag (truncated DNS-Antwort), damit grosse Antworten robuster verarbeitet werden.
+- DNSSEC-Flags und AD-Bit als zusaetzliche Vertrauenspruefung im Output.
+- `--strict-cname-chain`: CNAME-Ketten explizit verfolgen und im Ergebnis dokumentieren.
+- Batch-Modus (mehrere IPs aus Datei/stdin) fuer schnelle Massenpruefung.
+- Optionales Structured Logging (`ndjson`) fuer Observability-Pipelines.
