@@ -1,156 +1,150 @@
 # check_ptr_validname
 
-`check_ptr_validname` ist ein DNS-Check in C, der fuer eine IP-Adresse prueft, ob PTR-Eintrag und Forward-Aufloesung konsistent sind.
+English documentation is the default.
+German version: [`README.de.md`](README.de.md)
 
-## Kompilieren
+`check_ptr_validname` is a DNS check written in C that validates whether a PTR record and forward resolution are consistent for a given IP address.
 
-Voraussetzungen:
-- C-Compiler (`cc`, `gcc` oder `clang`)
+## Build
+
+Requirements:
+- C compiler (`cc`, `gcc`, or `clang`)
 - `make`
-- POSIX-Umgebung (Linux/macOS; Cross-Compile fuer Windows ueber Toolchain)
+- POSIX environment (Linux/macOS; Windows cross-compilation via toolchain)
 
-Build fuer das Host-System:
+Build for the host system:
 
 ```sh
 make
 ```
 
-Build-Konfiguration anzeigen:
+Show build configuration:
 
 ```sh
 make print-config
 ```
 
-Artefakt wird unter `build/<os>-<arch>/check_ptr_validname` erzeugt.
+The artifact is generated at `build/<os>-<arch>/check_ptr_validname`.
 
-Cross-Compile-Beispiele:
+Cross-compilation examples:
 
 ```sh
 make OS=linux ARCH=arm64 CROSS=aarch64-linux-gnu-
 make OS=windows ARCH=x86_64 CROSS=x86_64-w64-mingw32-
 ```
 
-Aufraeumen:
+Clean up:
 
 ```sh
 make clean
 ```
 
-## Nutzung
+## Usage
 
-Grundsyntax:
+Basic syntax:
 
 ```sh
 ./build/<os>-<arch>/check_ptr_validname -i <ip-address> [options]
 ```
 
-Beispiel:
+Example:
 
 ```sh
 ./build/macos-arm64/check_ptr_validname -i 8.8.8.8 --perfdata
 ```
 
-Unterstuetzte Parameter:
-- `-i`, `--ip <ip>`: IP-Adresse (IPv4 oder IPv6), Pflicht
-- `-r`, `--resolver <ip>`: Expliziter DNS-Resolver (statt automatisch aus `/etc/resolv.conf`)
-- `-t`, `--timeout-ms <ms>`: Timeout pro DNS-Lookup in Millisekunden (Default: `2000`)
-- `--warn-partial`: Teilkonsistenz als `WARNING` statt `CRITICAL` behandeln
-- `--perfdata`: Monitoring-Perfdata anhaengen
-- `--json`: JSON-Ausgabe fuer Automatisierung/Pipelines
-- `--idn-check`: Erweiterte IDN/Punycode-Validierung aktivieren
-- `-h`, `--help`: Hilfe anzeigen
+Supported parameters:
+- `-i`, `--ip <ip>`: IP address (IPv4 or IPv6), required
+- `-r`, `--resolver <ip>`: Explicit DNS resolver (instead of auto-detecting from `/etc/resolv.conf`)
+- `-t`, `--timeout-ms <ms>`: Timeout per DNS lookup in milliseconds (default: `2000`)
+- `--warn-partial`: Return partial consistency as `WARNING` instead of `CRITICAL`
+- `--perfdata`: Append monitoring perfdata
+- `--json`: JSON output for automation/pipelines
+- `--idn-check`: Enable extended IDN/punycode validation
+- `-h`, `--help`: Show help
 
-## Exit-Codes (Nagios/Icinga-kompatibel)
+## Exit Codes (Nagios/Icinga compatible)
 
 - `0` = `OK`
 - `1` = `WARNING`
 - `2` = `CRITICAL`
 - `3` = `UNKNOWN`
 
-## Was wird geprueft
+## Validation Steps
 
-1. Eingabevalidierung der IP (IPv4/IPv6).
-2. PTR-Lookup per DNS-Query.
-3. Hostname-Validierung:
-   - Strikt: RFC-nahe FQDN-Regeln (`[A-Za-z0-9-]`, Label 1-63, Gesamtlaenge <= 253)
-   - Optional: IDN/Punycode-Check (`--idn-check`) fuer `xn--` Labels
-4. Forward-Lookup (`A` bei IPv4, `AAAA` bei IPv6).
-5. Forward-Confirm-Match: mindestens eine Forward-IP muss exakt zur Eingabe-IP passen.
+1. Validate input IP (IPv4/IPv6).
+2. Perform PTR lookup.
+3. Validate hostname:
+   - Strict: RFC-like FQDN rules (`[A-Za-z0-9-]`, label length 1-63, total length <= 253)
+   - Optional: IDN/punycode checks (`--idn-check`) for `xn--` labels
+4. Perform forward lookup (`A` for IPv4, `AAAA` for IPv6).
+5. Confirm at least one forward IP exactly matches the input IP.
 
-## Teilkonsistenz / WARNING
+## Partial Consistency / WARNING
 
-Mit `--warn-partial` werden grenzwertige, aber technisch teilweise aufloesbare Faelle als `WARNING` zurueckgegeben, z. B.:
-- PTR vorhanden, Hostname verletzt strikte Regeln, besteht aber die relaxte Pruefung.
-- IDN/Punycode-Check ist aktiv und meldet Auffaelligkeiten.
+With `--warn-partial`, edge cases that are technically partially resolvable return `WARNING`, for example:
+- PTR exists, hostname fails strict rules but passes relaxed validation.
+- IDN/punycode checks are enabled and show suspicious results.
 
-Wenn Forward-Lookup oder Forward-Confirm-Match fehlschlaegt, bleibt das Ergebnis `CRITICAL`.
+If forward lookup or forward-confirm-match fails, the result remains `CRITICAL`.
 
-## Performance-Data
+## Performance Data
 
-Mit `--perfdata` wird die erste Ausgabezeile um Latenzen erweitert:
+With `--perfdata`, the first output line includes latency metrics:
 
 - `ptr_lookup_ms`
 - `forward_lookup_ms`
 - `total_ms`
 
-Beispiel:
+Example:
 
 ```text
-OK - PTR vorhanden und konsistent (8.8.8.8 -> dns.google) [Forward-Confirm-Match erfolgreich] | ptr_lookup_ms=4.768ms;;;; forward_lookup_ms=10.437ms;;;; total_ms=15.842ms;;;;
+OK - PTR present and consistent (8.8.8.8 -> dns.google) [Forward confirm match succeeded] | ptr_lookup_ms=4.768ms;;;; forward_lookup_ms=10.437ms;;;; total_ms=15.842ms;;;;
 ```
 
-## JSON-Ausgabe
+## JSON Output
 
-Mit `--json` wird eine maschinenlesbare Ausgabe geliefert, inklusive:
+With `--json`, output is machine-readable and includes:
 - `state`, `code`, `message`, `detail`
 - `ip`, `hostname`, `resolver`, `timeout_ms`
-- `checks` (Einzelergebnisse)
-- `latency_ms` (Lookup-Zeiten)
+- `checks` (individual check results)
+- `latency_ms` (lookup timings)
 
-Beispiel:
+Example:
 
 ```json
-{"state":"OK","code":0,"message":"PTR vorhanden und konsistent","detail":"Forward-Confirm-Match erfolgreich","ip":"8.8.8.8","hostname":"dns.google","resolver":"192.168.171.133:53","timeout_ms":2000,"checks":{"ptr":true,"hostname":true,"idn":true,"forward":true,"forward_match":true,"partial":false},"latency_ms":{"ptr_lookup":7.182,"forward_lookup":46.210,"total":53.425}}
+{"state":"OK","code":0,"message":"PTR present and consistent","detail":"Forward confirm match succeeded","ip":"8.8.8.8","hostname":"dns.google","resolver":"192.168.171.133:53","timeout_ms":2000,"checks":{"ptr":true,"hostname":true,"idn":true,"forward":true,"forward_match":true,"partial":false},"latency_ms":{"ptr_lookup":7.182,"forward_lookup":46.210,"total":53.425}}
 ```
 
-## Hinweise zur Resolver-Wahl
+## Resolver Notes
 
-- Ohne `--resolver` wird der erste `nameserver` aus `/etc/resolv.conf` verwendet.
-- Mit `--resolver` wird explizit gegen diesen Resolver auf Port `53/UDP` gefragt.
-
-## Weitere Ideen
-
-- Option `--resolver-port`, um non-standard DNS-Ports (z. B. Lab-Setups) direkt zu unterstuetzen.
-- TCP-Fallback bei `TC`-Flag (truncated DNS-Antwort), damit grosse Antworten robuster verarbeitet werden.
-- DNSSEC-Flags und AD-Bit als zusaetzliche Vertrauenspruefung im Output.
-- `--strict-cname-chain`: CNAME-Ketten explizit verfolgen und im Ergebnis dokumentieren.
-- Batch-Modus (mehrere IPs aus Datei/stdin) fuer schnelle Massenpruefung.
-- Optionales Structured Logging (`ndjson`) fuer Observability-Pipelines.
+- Without `--resolver`, the first `nameserver` from `/etc/resolv.conf` is used.
+- With `--resolver`, DNS queries go explicitly to that resolver on `53/UDP`.
 
 ## GitHub Actions
 
-Dieses Repo enthaelt zwei Workflows:
+This repository contains two workflows:
 
 - `Deploy GitHub Pages` (`.github/workflows/pages.yml`)
-  - Trigger: Push auf `main` oder manuell
-  - Baut die Website mit Astro (`src/pages/index.astro`)
-  - Verwendet `PUBLIC_*` Umgebungsvariablen fuer Repo-/Download-Links
-  - Deployt die 1-Pager-Doku nach GitHub Pages
+  - Trigger: push to `main` or manual run
+  - Builds the site with Astro (`src/pages/index.astro`)
+  - Uses `PUBLIC_*` environment variables for repository/download links
+  - Deploys the one-pager to GitHub Pages
 
 - `Build Linux x86_64 Binary` (`.github/workflows/release-linux.yml`)
-  - Trigger: Tags `v*` oder manuell
-  - Baut `check_ptr_validname` fuer `linux/x86_64`
-  - Laedt Binary + SHA256 als Workflow-Artefakt hoch
-  - Erstellt bei Tag-Build automatisch ein GitHub Release mit Assets
+  - Trigger: tags `v*` or manual run
+  - Builds `check_ptr_validname` for `linux/x86_64`
+  - Uploads binary + SHA256 as workflow artifact
+  - Automatically creates a GitHub Release for tag builds
 
-Tag-Beispiel fuer ein Release:
+Tag example for a release:
 
 ```sh
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-## Website lokal testen (Astro)
+## Test Website Locally (Astro)
 
 ```sh
 npm ci
