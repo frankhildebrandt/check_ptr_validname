@@ -1,9 +1,7 @@
 {
   "title": "Source Code",
   "subtitle": "Portable C implementation",
-  "contributors": 1,
-  "contributorsBy": 1,
-  "stars": 64,
-  "starsBy": 4,
+  "focus": "Inspect",
+  "deliverable": "C source",
   "repoUrl": "https://github.com/frankhildebrandt/check_ptr_validname"
 }

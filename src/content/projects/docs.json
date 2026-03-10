@@ -1,9 +1,7 @@
 {
   "title": "Documentation",
   "subtitle": "CLI and monitoring integration",
-  "contributors": 3,
-  "contributorsBy": 1,
-  "stars": 12,
-  "starsBy": 1,
+  "focus": "Operate",
+  "deliverable": "Guides",
   "repoUrl": "https://github.com/frankhildebrandt/check_ptr_validname/tree/main/docs"
 }
