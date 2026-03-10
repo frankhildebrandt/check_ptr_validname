@@ -8,10 +8,12 @@ interface Props {
 }
 
 const { title = SITE_NAME, description = SITE_DESCRIPTION } = Astro.props;
-const baseUrl = import.meta.env.BASE_URL;
+const baseUrl = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const siteUrl = Astro.site ?? new URL("https://frankhildebrandt.github.io");
+const withBase = (path = "") => new URL(`${baseUrl}${path.replace(/^\//, "")}`, siteUrl).pathname;
 const navLinks = {
-  "./": "Home",
-  "docs/": "Docs",
+  [withBase("")]: "Home",
+  [withBase("docs/")]: "Docs",
 };
 ---
 
@@ -19,7 +21,6 @@ const navLinks = {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <base href={baseUrl} />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
